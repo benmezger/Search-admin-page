@@ -9,7 +9,6 @@ System: Unix
 import pages
 from sys import argv, exit
 import httplib
-import socket
 from optparse import OptionParser
 
 
@@ -33,9 +32,7 @@ class GetPages:
     def checkSite(self):
         if not self.site.startswith("www."):
             self.site = "www." + self.site
-         
         try:
-               
             for pagelinks in pages.links:
                 pagelinks = pagelinks.replace("\n", "") ; pagelinks =  "/" + pagelinks
                 host = self.site + pagelinks
@@ -48,7 +45,6 @@ class GetPages:
                         with open(self.filename, "a") as data:
                             data.writelines("\n" + host + "--" + str(response.status))
                 print "%s Status: %s" % (host, response.status)
-            
         except Exception as error: return "Error occured: %s" % error                  
         
 if __name__ == "__main__":
