@@ -13,8 +13,9 @@ from optparse import OptionParser
 
 
 parser = OptionParser()
-parser.add_option("-w", "--write", dest = "filename", help = "write report to file", metavar = "FILE")
+parser.add_option("-l", "--language", help = "Choose a specific language {php/brf/cgi/cfm/js/asp}")
 (options, args) = parser.parse_args()
+
         
 class GetPages:
     
@@ -22,30 +23,45 @@ class GetPages:
         try:
             self.site = argv[1]
         except IndexError as error:
-            print "\nError, where is the link? --  %s" % error
-            exit(0)
-            
-        self.write = argv[2] if len(argv) >= 3 else False    
-        self.filename = argv[3] if len(argv) >= 4 else False
-        self.checkSite = self.checkSite()
+            print "\nError, where is the link? -- %s" % error
+            exit(1)
 
-    def checkSite(self):
-        if not self.site.startswith("www."):
-            self.site = "www." + self.site
-        try:
+        self.language = argv[3] if len(argv) >= 3 else False
+        self.start = self.start()
+        
+    def connectSite(self, language = None):
+        
+        if not language:
             for pagelinks in pages.links:
                 pagelinks = pagelinks.replace("\n", "") ; pagelinks =  "/" + pagelinks
                 host = self.site + pagelinks
                 site_connection = httplib.HTTPConnection(self.site)
                 site_connection.request("GET", host)
                 response = site_connection.getresponse()
-                
-                if response.status:
-                    if self.write:
-                        with open(self.filename, "a") as data:
-                            data.writelines("\n" + host + "--" + str(response.status))
                 print "%s Status: %s" % (host, response.status)
-        except Exception as error: return "Error occured: %s" % error                  
+        else:
+            if self.language in pages.languages:
+                for pagelinks in pages.languages.get(self.language):
+                    pagelinks = pagelinks.replace("\n", "") ; pagelinks =  "/" + pagelinks
+                    host = self.site + pagelinks
+                    site_connection = httplib.HTTPConnection(self.site)
+                    site_connection.request("GET", host)
+                    response = site_connection.getresponse()
+                    print "%s Status: %s" % (host, response.status)
+            else:
+                print "Language not found!"
+
+    def start(self):
+        
+        if not self.site.startswith("www.") or self.site.startswith("http"):
+            self.site = "www." + self.site
+        try:
+            if self.language:
+                self.connectSite(self.language)
+            else:
+                self.connectSite()
+        except Exception as error: 
+            print "Error occured: %s" % error                  
         
 if __name__ == "__main__":
     GetPages()
